@@ -4,11 +4,12 @@
 """
 from typing import List
 from asyncio import as_completed
-task_wait_random = __import__('3-tasks').task_wait_random
+
+task_wait_random = __import__("3-tasks").task_wait_random
 
 
 async def task_wait_n(n: int, max_delay: int = 10) -> List[float]:
-    '''Execute task_wait_random and returns sorted list of delay'''
+    """Execute task_wait_random and returns sorted list of delay"""
     tasks = [task_wait_random(max_delay) for ـ in range(n)]
     delays = []
 
