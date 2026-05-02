@@ -11,6 +11,7 @@ class Server:
     """
     Server class to paginate a database of popular baby names.
     """
+
     DATA_FILE = "Popular_Baby_Names.csv"
 
     def __init__(self):
@@ -36,9 +37,7 @@ class Server:
         if self.__indexed_dataset is None:
             dataset = self.dataset()
             truncated_dataset = dataset[:1000]
-            self.__indexed_dataset = {
-                i: dataset[i] for i in range(len(dataset))
-            }
+            self.__indexed_dataset = {i: dataset[i] for i in range(len(dataset))}
         return self.__indexed_dataset
 
     def get_hyper_index(self, index: int = None, page_size: int = 10) -> Dict:
@@ -65,5 +64,5 @@ class Server:
             "index": index,
             "next_index": len(data),
             "page_size": page_size,
-            "data": data
+            "data": data,
         }
