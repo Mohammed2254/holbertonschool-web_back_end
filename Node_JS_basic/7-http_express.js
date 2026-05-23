@@ -1,26 +1,51 @@
-const http = require('http');
-const countStudents = require('./3-read_file_async');
+// Task 7: Create a small HTTP server using Express that listens on port 1245,
 
-const app = http.createServer(async (req, res) => {
-  res.writeHead(200, { 'Content-Type': 'text/html' });
-  const { url } = req;
-  const path = process.argv[2];
-  if (url === '/') {
-    res.end('Hello Holberton School!');
-  } else if (url === '/students') {
-    if (path !== null) {
-      const msg = 'This is the list of our students\n';
-      try {
-        const students = await countStudents(path);
-        res.end(`${msg}${students.join('\n')}`);
-      } catch (err) {
-        res.end(`${msg}${err.message}`);
-      }
+const express = require('express');
+const fs = require('fs');
+
+const DATABASE_PATH = process.argv[2];
+
+const readDatabaseFile = () => {
+    try {
+        const data = fs.readFileSync(DATABASE_PATH);
+        const lines = data.toString().split('\n').filter((line) => line.trim() !== '');
+        return lines.slice(1).map((line) => line.split(','));
+    } catch (error) {
+        throw new Error('Cannot load the database');
     }
-  } else {
-    res.write('Not Found');
-    res.end();
-  }
+};
+
+const app = express();
+
+app.get('/', (req, res) => {
+    res.send('Hello Holberton School!');
+});
+
+app.get('/students', (req, res) => {
+    try {
+        const students = readDatabaseFile();
+
+        const fieldMap = {};
+        for (const student of students) {
+            const [firstname, , , field] = student;
+            if (!fieldMap[field]) {
+                fieldMap[field] = [];
+            }
+            fieldMap[field].push(firstname);
+        }
+
+        let responseText = 'This is the list of our students\n';
+        responseText += `Number of students: ${students.length}\n`;
+
+        const fields = Object.keys(fieldMap).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+        for (const field of fields) {
+            responseText += `Number of students in ${field}: ${fieldMap[field].length}. List: ${fieldMap[field].join(', ')}\n`;
+        }
+
+        res.send(responseText.trim());
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
 });
 
 app.listen(1245);
