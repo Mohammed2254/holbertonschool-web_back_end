@@ -1,0 +1,11 @@
+{
+  "name": "node_js_basics",
+  "version": "1.0.0",
+  "description": "Node JS Basics",
+  "main": "0-console.js",
+  "scripts": {
+    "lint": "./node_modules/.bin/eslint"
+  },
+  "author": "",
+  "license": "ISC"
+}
