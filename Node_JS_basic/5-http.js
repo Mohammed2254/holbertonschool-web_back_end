@@ -1,63 +1,51 @@
-// Task 5: Create a small HTTP server using Node's native http module
-
-const fs = require('fs');
 const http = require('http');
+const fs = require('fs');
 
-const DATABASE_PATH = process.argv[2];
+function countStudents(path) {
+  return new Promise((resolve, reject) => {
+    fs.readFile(path, 'utf8', (err, data) => {
+      if (err) return reject(Error('Cannot load the database'));
 
-const readDatabaseFile = () => {
-  try {
-    const data = fs.readFileSync(DATABASE_PATH);
-    const lines = data.toString().split('\n').filter((line) => line.trim() !== '');
-    return lines.slice(1).map((line) => line.split(','));
-  } catch (error) {
-    throw new Error('Cannot load the database');
-  }
-};
+      const lines = data.split('\n').filter((l) => l.trim() !== '');
+      const fields = {};
 
-const app = http.createServer((req, res) => {
+      for (let i = 1; i < lines.length; i++) {
+        const parts = lines[i].split(',');
+        const field = parts[3];
+        const firstname = parts[0];
+
+        if (!fields[field]) fields[field] = [];
+        fields[field].push(firstname);
+      }
+
+      let output = `Number of students: ${lines.length - 1}`;
+      for (const field of Object.keys(fields).sort()) {
+        output += `\nNumber of students in ${field}: ${fields[field].length}. List: ${fields[field].join(', ')}`;
+      }
+
+      resolve(output);
+    });
+  });
+}
+
+const app = http.createServer(async (req, res) => {
   if (req.url === '/') {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/plain');
+    res.writeHead(200);
     res.end('Hello Holberton School!');
   } else if (req.url === '/students') {
-    let responseText = 'This is the list of our students\n';
+    const db = process.argv[2];
+
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.write('This is the list of our students\n');
+
     try {
-      const students = readDatabaseFile();
-
-      const fieldMap = {};
-      for (const student of students) {
-        const [firstname, , , field] = student;
-        if (!fieldMap[field]) {
-          fieldMap[field] = [];
-        }
-        fieldMap[field].push(firstname);
-      }
-
-      responseText += `Number of students: ${students.length}\n`;
-
-      const fields = Object.keys(fieldMap)
-        .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
-      for (const field of fields) {
-        responseText += `Number of students in ${field}: ${fieldMap[field].length}. List: ${fieldMap[field].join(', ')}\n`;
-      }
-
-      res.statusCode = 200;
-      res.setHeader('Content-Type', 'text/plain');
-      res.end(responseText.trim());
-    } catch (error) {
-      res.statusCode = 500;
-      res.setHeader('Content-Type', 'text/plain');
-      responseText += error.message;
-      res.end(responseText);
+      const data = await countStudents(db);
+      res.end(data);
+    } catch (err) {
+      res.end(err.message);
     }
-  } else {
-    res.statusCode = 404;
-    res.setHeader('Content-Type', 'text/plain');
-    res.end('Not found');
   }
 });
 
 app.listen(1245);
-
 module.exports = app;
